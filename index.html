@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Flappy Bird</title>
+
+<style>
+body{
+    text-align:center;
+    font-family:Arial;
+    margin:0;
+    background:linear-gradient(#020024,#090979,#000000);
+}
+
+canvas{
+    border:3px solid black;
+    background:#000022;
+}
+
+/* Mobile Jump Button */
+#jumpBtn{
+    margin-top:10px;
+    padding:15px 40px;
+    font-size:20px;
+    background:orange;
+    border:none;
+    border-radius:10px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1 style="color:white;">Flappy Bird</h1>
+<h2 style="color:white;">Score: <span id="score">0</span></h2>
+
+<canvas id="game" width="400" height="600"></canvas>
+
+<br>
+<button id="jumpBtn">JUMP</button>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreDisplay = document.getElementById("score");
+const jumpBtn = document.getElementById("jumpBtn");
+
+let score = 0;
+let lavaHeight = 40;
+
+let bird = {
+    x:50,
+    y:150,
+    width:20,
+    height:20,
+    velocity:0,
+    gravity:0.5,
+    lift:-8
+};
+
+let pipes = [];
+let stars = [];
+let frame = 0;
+
+// stars
+for(let i=0;i<60;i++){
+    stars.push({
+        x:Math.random()*400,
+        y:Math.random()*600,
+        size:Math.random()*2
+    });
+}
+
+function jump(){
+    bird.velocity = bird.lift;
+}
+
+// keyboard control
+document.addEventListener("keydown", jump);
+
+// mobile button
+jumpBtn.addEventListener("touchstart", jump);
+jumpBtn.addEventListener("click", jump);
+
+function resetGame(){
+    score = 0;
+    frame = 0;
+    pipes = [];
+    bird.y = 150;
+    bird.velocity = 0;
+    scoreDisplay.textContent = score;
+}
+
+function drawStars(){
+    ctx.fillStyle="white";
+    stars.forEach(star=>{
+        ctx.fillRect(star.x,star.y,star.size,star.size);
+    });
+}
+
+function drawBackgroundText(){
+    ctx.fillStyle="rgba(255,255,255,0.15)";
+    ctx.font="35px Arial";
+    ctx.textAlign="center";
+
+    ctx.fillText("Created by Eden", canvas.width/2, canvas.height/2 - 20);
+    ctx.fillText("Designed by Nukuzo", canvas.width/2, canvas.height/2 + 30);
+}
+
+function drawBird(){
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+}
+
+function drawPipes(){
+
+    pipes.forEach(pipe=>{
+
+        let magma = ctx.createLinearGradient(pipe.x,0,pipe.x+pipe.width,0);
+        magma.addColorStop(0,"#8B0000");
+        magma.addColorStop(0.5,"#ff4500");
+        magma.addColorStop(1,"#ffd700");
+
+        ctx.fillStyle = magma;
+
+        ctx.fillRect(pipe.x,0,pipe.width,pipe.top);
+        ctx.fillRect(pipe.x,pipe.bottom,pipe.width,canvas.height);
+
+    });
+
+}
+
+function drawLava(){
+
+    ctx.fillStyle="red";
+    ctx.fillRect(0,canvas.height-lavaHeight,canvas.width,lavaHeight);
+
+    ctx.fillStyle="orange";
+
+    for(let i=0;i<20;i++){
+        ctx.fillRect(i*20,canvas.height-lavaHeight,10,10);
+    }
+
+}
+
+function updateBird(){
+
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
+
+    if(bird.y + bird.height > canvas.height - lavaHeight){
+        resetGame();
+    }
+
+}
+
+function updatePipes(){
+
+    if(frame % 90 === 0){
+
+        let gap = 140;
+        let top = Math.random()*300;
+
+        pipes.push({
+            x:canvas.width,
+            width:40,
+            top:top,
+            bottom:top+gap,
+            passed:false
+        });
+
+    }
+
+    pipes.forEach(pipe=>{
+
+        pipe.x -= 2;
+
+        if(!pipe.passed && pipe.x + pipe.width < bird.x){
+            score++;
+            scoreDisplay.textContent = score;
+            pipe.passed = true;
+        }
+
+        if(
+            bird.x < pipe.x + pipe.width &&
+            bird.x + bird.width > pipe.x &&
+            (bird.y < pipe.top || bird.y + bird.height > pipe.bottom)
+        ){
+            resetGame();
+        }
+
+    });
+
+}
+
+function gameLoop(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    drawStars();
+    drawBackgroundText();
+    drawPipes();
+    drawBird();
+    drawLava();
+
+    updateBird();
+    updatePipes();
+
+    frame++;
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
